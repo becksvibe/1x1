@@ -2,7 +2,7 @@
 
 Eine einzelne Datei (`index.html`) ohne Server. Alle Daten bleiben im Browser des Geräts (`localStorage`).
 
-Ablauf: Eine Runde hat 10 Aufgaben. Zu jeder gibt es ein Eingabefeld und sofortige Rückmeldung. Am Rundenende erscheinen Ergebnis, Level, Streak und die Einmaleins-Karte.
+Beim ersten Start fragt die App nach einem Namen (siehe Profile). Ablauf: Eine Runde hat 10 Aufgaben. Zu jeder gibt es ein Eingabefeld und sofortige Rückmeldung. Am Rundenende erscheinen Ergebnis, Level, Streak und die Einmaleins-Karte.
 
 ## Aufgabenauswahl
 
@@ -86,9 +86,18 @@ Level, Diamanten, Karte und Rekord bleiben bei einem Neustart des Streaks erhalt
 
 **Anzeige:** Oben steht `🔥` mit der aktuellen Zahl. Wäre der Streak ohne Joker gerissen, steht dort schon beim Öffnen `0`. Am Rundenende erscheinen der Streak (mit Rekord, falls höher) und Meldungen zu Joker, Meilenstein oder Rekord. "Neuer Rekord" kommt nur, wenn der Streak nach einem Abbruch einen früheren Bestwert übertrifft.
 
+## Profile ("Wer übt?")
+
+- Beim ersten Start fragt die App nach einem Namen. Ohne Namen geht es nicht los.
+- Jedes Profil hat einen **eigenen Stand** (Diamanten, Level, Streak, Karte, Statistik). Mehrere Kinder können sich also ein Gerät teilen.
+- Oben in der Mitte zeigt ein kleiner Button den aktuellen Namen. Ein Tipp öffnet die Auswahl, dort kann man das Profil wechseln oder ein neues anlegen. Eine laufende Runde wird dabei abgebrochen, bereits gegebene Antworten bleiben gespeichert.
+- Die App merkt sich das zuletzt benutzte Profil und startet direkt damit.
+- Die Namen bleiben im Browser des Geräts. Intern hat jedes Profil eine zufällige ID.
+- **Update von einer Version ohne Profile:** Der bisherige Fortschritt wird dem ersten angelegten Namen zugeordnet. Der alte Datensatz (`einmaleins-v1`) bleibt als Sicherung im Browser bestehen und wird nicht mehr verwendet.
+
 ## Datenspeicherung
 
-Alles liegt im `localStorage` unter dem Schlüssel `einmaleins-v1`:
+Pro Profil liegt ein Datensatz im `localStorage` unter dem Schlüssel `einmaleins-p-<Profil-ID>`:
 
 ```json
 {
@@ -106,7 +115,13 @@ Alles liegt im `localStorage` unter dem Schlüssel `einmaleins-v1`:
 | `stars` | gesammelte Diamanten |
 | `streak` | `cur` aktueller Streak, `best` Rekord, `last` letztes gezähltes Datum, `jokers` vorhandene Joker, `broke` war der Streak schon einmal gerissen |
 
-Die Daten gelten pro Gerät, Browser und Adresse. Wer die Browserdaten löscht, ein anderes Gerät nutzt oder die Seite unter anderer Adresse veröffentlicht, beginnt bei null.
+Die Profilliste liegt unter dem Schlüssel `einmaleins-profiles`:
+
+```json
+{ "list": [ { "id": "k3x9ab", "name": "Max" } ], "last": "k3x9ab" }
+```
+
+Die Daten gelten pro Profil, Gerät, Browser und Adresse. Wer die Browserdaten löscht, ein anderes Gerät nutzt oder die Seite unter anderer Adresse veröffentlicht, beginnt bei null.
 
 ## Anpassen
 
@@ -115,6 +130,7 @@ Alle Regeln stehen im Skript von `index.html`:
 | Was | Wo |
 |---|---|
 | Aufgaben pro Runde | Konstante `ROUND` |
+| Profile (Auswahl, Anlegen, Wechseln) | `showWho()`, `addProfile()`, `selectProfile()`, `start()` |
 | Gewichtung der Aufgaben | Funktion `weight` in `newRound()` |
 | Tempo-Messung (Obergrenze 15 s, Durchschnitt) | in `submit()` |
 | Basiszeit und Langsamkeit | `baseMs()` und `slowness()` |
