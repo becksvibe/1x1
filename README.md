@@ -1,12 +1,67 @@
-# Einmaleins-Trainer: Streak
+# Einmaleins-Trainer
+
+Eine einzelne Datei (`index.html`) ohne Server. Alle Daten bleiben im Browser des Geräts (`localStorage`).
+
+Ablauf: Eine Runde hat 10 Aufgaben. Zu jeder gibt es ein Eingabefeld und sofortige Rückmeldung. Am Rundenende erscheinen Ergebnis, Level, Streak und die Einmaleins-Karte.
+
+## Aufgabenauswahl
+
+Die Aufgaben stammen aus dem Bereich 1 × 1 bis 10 × 10. Dabei zählen `3 × 7` und `7 × 3` als **dieselbe Aufgabe** (55 verschiedene), die Reihenfolge der Faktoren wird zufällig gezeigt. Pro Runde werden 10 verschiedene Aufgaben gewichtet gezogen, ohne Zurücklegen.
+
+Jede Aufgabe hat ein Gewicht. Je höher es ist, desto wahrscheinlicher kommt sie dran:
+
+```
+Gewicht = max(0,3 ; 1 + 2 · falsch − 0,3 · richtig + 1,5 · Langsamkeit)
+```
+
+- **Falsche Antworten** erhöhen das Gewicht kräftig.
+- **Richtige Antworten** senken es langsam.
+- **Langsame Aufgaben** erhöhen es ebenfalls (siehe Tempo).
+
+## Tempo
+
+Gemessen wird die Zeit von der Anzeige der Aufgabe bis zum Abschicken, **nur bei richtigen Antworten**.
+
+| Regel | Wert |
+|---|---|
+| Obergrenze pro Antwort | 15 Sekunden (gegen Ablenkung) |
+| App im Hintergrund | Beim Zurückkommen startet die Zeit der Aufgabe neu |
+| Gespeichert pro Aufgabe | gleitender Durchschnitt `ms` (alter Wert zu 50 %, neuer zu 50 %) und Anzahl der Messungen `tn` |
+| Basis | Median aller Durchschnittszeiten (mindestens 3 Sekunden, ohne Daten 4 Sekunden) |
+
+**Langsamkeit** einer Aufgabe, für das Gewicht:
+
+```
+Langsamkeit = min(2 ; max(0 ; (ms − Basis) / Basis)) · min(1 ; tn / 2)
+```
+
+Der Maßstab ist also seine eigene typische Zeit. Mit nur einer Messung zählt die Langsamkeit nur halb.
+
+**"Nicht flott"** gilt eine Aufgabe, wenn mindestens 2 Messungen vorliegen und der Durchschnitt über **5 Sekunden** und über dem **1,5-Fachen der Basis** liegt.
+
+## Einmaleins-Karte
+
+Ein 10 × 10-Raster, das am Rundenende gezeigt wird. Jedes Feld ist eine Aufgabe (gespiegelte Felder teilen sich dieselben Daten).
+
+| Farbe | Bedeutung | Regel |
+|---|---|---|
+| dunkel | noch offen | noch nie geübt |
+| blau | wackelt | höchstens so viele richtige wie falsche Antworten |
+| türkis | noch nicht flott | mehr richtige als falsche, aber noch nicht sicher oder noch zu langsam |
+| grün (leuchtend) | sicher und flott | mindestens 3 richtige, richtige mindestens 3-mal so oft wie falsche, und nicht "nicht flott" |
+
+Felder, die in der letzten Runde einen Schritt weitergekommen sind (türkis oder grün), blinken kurz mit weißem Rand. Unter der Karte steht die Zahl der sicheren Felder.
+
+## Diamanten und Level
+
+- Eine richtige Antwort gibt 1 💎, eine Runde mit 10 von 10 zusätzlich 3 Bonus-Diamanten.
+- Das Level hängt von der Zahl der Diamanten ab (Schwellen und Titel in der Konstante `LEVELS`). Am Rundenende steht nur, wie viele Diamanten bis zum nächsten Level fehlen. Der Titel wird erst beim Aufstieg verraten.
+
+## Streak
 
 Der Streak zählt, an wie vielen Tagen **hintereinander** geübt wurde. Er belohnt Regelmäßigkeit statt Menge.
 
-## Regeln
-
-**Was zählt:** Eine abgeschlossene Runde (10 Aufgaben) pro Kalendertag, auch am Wochenende. Weitere Runden am selben Tag ändern den Streak nicht, sie bringen nur Diamanten.
-
-**Tageswechsel:** Maßgeblich ist das Datum auf dem Gerät (lokale Zeit, Wechsel um Mitternacht).
+**Was zählt:** Eine abgeschlossene Runde pro Kalendertag, auch am Wochenende. Weitere Runden am selben Tag ändern den Streak nicht, sie bringen nur Diamanten. Maßgeblich ist das Datum auf dem Gerät (lokale Zeit).
 
 | Situation beim Abschluss einer Runde | Ergebnis |
 |---|---|
@@ -16,15 +71,11 @@ Der Streak zählt, an wie vielen Tagen **hintereinander** geübt wurde. Er beloh
 | Tage verpasst, zu wenig Joker | Streak startet neu bei 1 |
 | Erste Runde überhaupt | Streak = 1 |
 
-Level, Diamanten, Landkarte und Rekord bleiben bei einem Neustart des Streaks erhalten.
+Level, Diamanten, Karte und Rekord bleiben bei einem Neustart des Streaks erhalten.
 
-## Joker
+**Joker:** Alle 7 Streak-Tage (7, 14, 21, …) gibt es 1 Joker, maximal 2 gleichzeitig. Sie werden automatisch eingesetzt.
 
-- Alle 7 Streak-Tage (7, 14, 21, …) gibt es 1 Joker.
-- Es können maximal 2 Joker gleichzeitig gesammelt werden.
-- Joker werden automatisch eingesetzt, wenn ein Tag verpasst wurde.
-
-## Meilensteine
+**Meilensteine:**
 
 | Streak-Tage | Bonus |
 |---|---|
@@ -33,41 +84,48 @@ Level, Diamanten, Landkarte und Rekord bleiben bei einem Neustart des Streaks er
 | 14 | +20 💎 |
 | 30 | +50 💎 |
 
-## Anzeige
-
-- **Oben:** `🔥` mit der aktuellen Zahl. Wäre der Streak ohne Joker gerissen, steht dort schon beim Öffnen `0`.
-- **Rundenende:** aktueller Streak (mit Rekord, falls höher), dazu Meldungen wie Joker eingesetzt, Joker verdient, Meilenstein-Bonus oder neuer Rekord. "Neuer Rekord" erscheint nur, wenn der Streak nach einem Abbruch einen früheren Bestwert übertrifft.
+**Anzeige:** Oben steht `🔥` mit der aktuellen Zahl. Wäre der Streak ohne Joker gerissen, steht dort schon beim Öffnen `0`. Am Rundenende erscheinen der Streak (mit Rekord, falls höher) und Meldungen zu Joker, Meilenstein oder Rekord. "Neuer Rekord" kommt nur, wenn der Streak nach einem Abbruch einen früheren Bestwert übertrifft.
 
 ## Datenspeicherung
 
-Alles liegt im `localStorage` des Browsers unter dem Schlüssel `einmaleins-v1`, im Feld `streak`:
+Alles liegt im `localStorage` unter dem Schlüssel `einmaleins-v1`:
 
 ```json
-{ "cur": 5, "best": 9, "last": "2026-11-20", "jokers": 1, "broke": false }
+{
+  "stats":  { "7x8": { "r": 5, "w": 1, "ms": 6400, "tn": 4 } },
+  "log":    [ { "t": "2026-11-02T16:04:11.000Z", "q": "7x8", "a": 56, "ok": true, "ms": 5120 } ],
+  "stars":  123,
+  "streak": { "cur": 5, "best": 9, "last": "2026-11-20", "jokers": 1, "broke": false }
+}
 ```
 
 | Feld | Bedeutung |
 |---|---|
-| `cur` | aktueller Streak in Tagen |
-| `best` | Rekord |
-| `last` | Datum der letzten gezählten Runde (`JJJJ-MM-TT`) |
-| `jokers` | vorhandene Joker (0 bis 2) |
-| `broke` | war der Streak schon einmal gerissen (steuert die Meldung "Neuer Rekord") |
+| `stats` | pro Aufgabe (kleinerer Faktor zuerst): `r` richtig, `w` falsch, `ms` durchschnittliche Zeit, `tn` Zahl der Zeitmessungen |
+| `log` | jede einzelne Antwort mit Zeitpunkt, Aufgabe, Eingabe, richtig oder falsch und Dauer in ms (die letzten 5000) |
+| `stars` | gesammelte Diamanten |
+| `streak` | `cur` aktueller Streak, `best` Rekord, `last` letztes gezähltes Datum, `jokers` vorhandene Joker, `broke` war der Streak schon einmal gerissen |
 
-Der Streak gilt pro Gerät, Browser und Adresse. Wer die Browserdaten löscht oder ein anderes Gerät nutzt, beginnt bei null. Wird die Datei unter einer anderen Adresse veröffentlicht, ist der Fortschritt ebenfalls getrennt.
+Die Daten gelten pro Gerät, Browser und Adresse. Wer die Browserdaten löscht, ein anderes Gerät nutzt oder die Seite unter anderer Adresse veröffentlicht, beginnt bei null.
 
 ## Anpassen
 
-Alle Streak-Regeln stehen im Skript von `index.html`:
+Alle Regeln stehen im Skript von `index.html`:
 
 | Was | Wo |
 |---|---|
-| Meilensteine und Boni | Konstante `MILE` |
-| Joker-Regel (alle 7 Tage, maximal 2) | in `updateStreak()`, Zeile mit `st.cur % 7 === 0 && st.jokers < 2` |
-| Anzeige oben (0 bei gerissenem Streak) | `shownStreak()` |
-| Meldungen am Rundenende | `updateStreak()` |
+| Aufgaben pro Runde | Konstante `ROUND` |
+| Gewichtung der Aufgaben | Funktion `weight` in `newRound()` |
+| Tempo-Messung (Obergrenze 15 s, Durchschnitt) | in `submit()` |
+| Basiszeit und Langsamkeit | `baseMs()` und `slowness()` |
+| Schwelle für "nicht flott" | `isSlow` |
+| Regel für die Kartenfarben | `cellState()` |
+| Level-Schwellen und Titel | Konstante `LEVELS` |
+| Streak-Meilensteine | Konstante `MILE` |
+| Joker-Regel | `updateStreak()`, Zeile mit `st.cur % 7 === 0 && st.jokers < 2` |
 
 ## Bekannte Grenzen
 
-- Die Zählung beruht auf der Gerätezeit. Wird die Uhr verstellt, wird der Streak entsprechend gewertet.
-- Mehrere Geräte haben getrennte Streaks. Ein gemeinsamer Stand bräuchte ein Backend.
+- Die Streak-Zählung beruht auf der Gerätezeit. Wird die Uhr verstellt, wird der Streak entsprechend gewertet.
+- Mehrere Geräte haben getrennte Stände. Ein gemeinsamer Stand bräuchte ein Backend.
+- Die Zeitmessung enthält auch die Tipp-Zeit. Das ist gewollt, denn sie gehört zum flotten Antworten.
