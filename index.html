@@ -118,10 +118,10 @@ function loadDb(id) {
 }
 let queue, idx, correct, cur, t0, locked, timer, startLevel, startMap;
 const LEVELS = [
-  [0, 'Frischer Noob', '🐣'], [20, 'Holzpickel-Held', '⛏️'], [50, 'Creeper-Flüsterer', '🧨'],
-  [100, 'Lama-Lenker', '🦙'], [180, 'Gleiter-Pilot', '🪂'], [300, 'Korok-Sucher', '🌱'],
-  [500, 'Redstone-Zauberer', '🔴'], [800, 'Drachen-Dompteur', '🐉'],
-  [1200, 'End-Boss-Bezwinger', '👾'], [2000, 'Einmaleins-Legende', '🏆']
+  [0, 'Frischer Noob', '🐣'], [20, 'Plastik Bro', ''], [50, 'Düsen-Wurst', ''],
+  [100, 'Zombie-Zähler', ''], [180, 'Loot Lurch', ''], [300, 'Filament-Furzer', ''],
+  [500, 'Multiplikations-Mutant', ''], [800, 'Creeper-Kneter', ''],
+  [1200, 'Filament-Flechter', ''], [1300, 'Plastik Profi', ''], [1400, 'Spaghetti Drucker', ''], [2000, 'Bald 3d-Drucker Besitzer', '']
 ];
 const lvl = g => { let i = 0; while (i + 1 < LEVELS.length && g >= LEVELS[i + 1][0]) i++; return i; };
 
