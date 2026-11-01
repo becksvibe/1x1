@@ -8,7 +8,7 @@
 :root{--bg:#0b0d1a;--panel:#171a33;--ink:#e8ecff;--cyan:#00e5ff;--violet:#b44dff;--ok:#39ff88;--no:#8ab4ff}
 *{box-sizing:border-box}
 html{height:100%}
-body{margin:0;min-height:100%;padding:1rem 0}
+body{margin:0;min-height:100%;padding:1rem 0 3.5rem}
 body{background:radial-gradient(circle at 50% 0%,#1a1f4a 0%,var(--bg) 60%);color:var(--ink);font-family:"Bahnschrift","Segoe UI",system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
 main{width:min(92vw,420px);text-align:center}
 .top{display:flex;justify-content:space-between;font-size:1.15rem;font-weight:700;margin-bottom:.8rem}
@@ -51,8 +51,8 @@ body{background-color:var(--bg);background-repeat:no-repeat}
 .sw.s2{background:#0a8fa3}
 .sw.s3{background:var(--ok);box-shadow:0 0 6px #39ff8888}
 #who p{margin:0}
-.top{align-items:center}
-.chip{width:auto;margin:0;font-size:.9rem;font-weight:600;letter-spacing:0;padding:.3rem .75rem;border-radius:999px;background:var(--panel);color:var(--ink);box-shadow:inset 0 0 0 1px #2a2f5c;opacity:.85}
+.chip{position:fixed;right:.8rem;bottom:.8rem;width:auto;margin:0;font-size:.72rem;font-weight:600;letter-spacing:0;padding:.25rem .65rem;border-radius:999px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px #2a2f5c;opacity:.5}
+.chip:hover,.chip:focus-visible{opacity:1}
 #whotitle{font-size:2.2rem;font-weight:800;margin-bottom:1.2rem;text-shadow:0 0 18px #00e5ff88}
 #plist button{margin-top:.6rem}
 .pbtn{background:var(--panel);color:var(--ink);box-shadow:inset 0 0 0 2px #2a2f5c}
@@ -64,7 +64,7 @@ body{background-color:var(--bg);background-repeat:no-repeat}
 <body>
 <main>
   <div id="play">
-    <div class="top"><span id="n"></span><button id="whobtn" class="chip" aria-label="Profil wechseln"></button><span id="stars"></span></div>
+    <div class="top"><span id="n"></span><span id="stars"></span></div>
     <div class="bar"><i id="bar"></i></div>
     <p id="task"></p>
     <input id="ans" inputmode="numeric" autocomplete="off" maxlength="3" aria-label="Antwort">
@@ -100,6 +100,7 @@ body{background-color:var(--bg);background-repeat:no-repeat}
     </div>
   </div>
 </main>
+<button id="whobtn" class="chip hidden" aria-label="Profil wechseln"></button>
 <script>
 const LEGACY = 'einmaleins-v1';      // alter Einzel-Datensatz (vor den Profilen)
 const PREFIX = 'einmaleins-p-';     // pro Profil: einmaleins-p-<id>
@@ -130,6 +131,7 @@ const lvl = g => { let i = 0; while (i + 1 < LEVELS.length && g >= LEVELS[i + 1]
 function showWho() {
   clearTimeout(timer);
   $('play').classList.add('hidden'); $('end').classList.add('hidden'); $('who').classList.remove('hidden');
+  $('whobtn').classList.add('hidden');
   const list = $('plist'); list.innerHTML = '';
   profiles.list.forEach(pr => {
     const b = document.createElement('button');
@@ -152,6 +154,7 @@ function selectProfile(id) {
   profiles.last = id; saveProfiles();
   $('whobtn').textContent = '👤 ' + pr.name;
   $('who').classList.add('hidden');
+  $('whobtn').classList.remove('hidden');
   newRound();
 }
 function addProfile() {
@@ -332,7 +335,7 @@ function finish() {
   const L = lvl(db.stars), lv = LEVELS[L], nx = LEVELS[L + 1];
   $('up').textContent = L > startLevel ? 'LEVEL UP! 🎊' : '';
   $('up').className = L > startLevel ? 'pop' : '';
-  $('lvl').textContent = 'Level ' + (L + 1) + ' · ' + lv[1] + ' ' + lv[2];
+  $('lvl').textContent = 'Level ' + (L + 1) + ' · ' + (lv[1] + ' ' + lv[2]).trim();
   $('xp').style.width = nx ? ((db.stars - lv[0]) / (nx[0] - lv[0]) * 100) + '%' : '100%';
   $('xptext').textContent = nx ? 'Noch ' + (nx[0] - db.stars) + ' 💎 bis zum nächsten Level 👀' : 'Höchstes Level erreicht!';
   drawMap();

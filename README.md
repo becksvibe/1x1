@@ -90,7 +90,7 @@ Level, Diamanten, Karte und Rekord bleiben bei einem Neustart des Streaks erhalt
 
 - Beim ersten Start fragt die App nach einem Namen. Ohne Namen geht es nicht los.
 - Jedes Profil hat einen **eigenen Stand** (Diamanten, Level, Streak, Karte, Statistik). Mehrere Kinder können sich also ein Gerät teilen.
-- Oben in der Mitte zeigt ein kleiner Button den aktuellen Namen. Ein Tipp öffnet die Auswahl, dort kann man das Profil wechseln oder ein neues anlegen. Eine laufende Runde wird dabei abgebrochen, bereits gegebene Antworten bleiben gespeichert.
+- Unten rechts steht ein kleiner, unauffälliger Button mit dem aktuellen Namen. Ein Tipp öffnet die Auswahl, dort kann man das Profil wechseln oder ein neues anlegen. Eine laufende Runde wird dabei abgebrochen, bereits gegebene Antworten bleiben gespeichert.
 - Die App merkt sich das zuletzt benutzte Profil und startet direkt damit.
 - Die Namen bleiben im Browser des Geräts. Intern hat jedes Profil eine zufällige ID.
 - **Update von einer Version ohne Profile:** Der bisherige Fortschritt wird dem ersten angelegten Namen zugeordnet. Der alte Datensatz (`einmaleins-v1`) bleibt als Sicherung im Browser bestehen und wird nicht mehr verwendet.
