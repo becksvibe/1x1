@@ -6,7 +6,7 @@ Beim ersten Start fragt die App nach einem Namen (siehe Profile). Ablauf: Eine R
 
 ## Aufgabenauswahl
 
-Die Aufgaben stammen aus dem Bereich 1 × 1 bis 10 × 10. Dabei zählen `3 × 7` und `7 × 3` als **dieselbe Aufgabe** (55 verschiedene), die Reihenfolge der Faktoren wird zufällig gezeigt. Pro Runde werden 10 verschiedene Aufgaben gewichtet gezogen, ohne Zurücklegen.
+Die Aufgaben stammen aus dem Bereich 1 × 1 bis 10 × 10. Dabei zählen `3 × 7` und `7 × 3` als **dieselbe Aufgabe** (55 verschiedene), die Reihenfolge der Faktoren wird zufällig gezeigt. Pro Runde werden 10 verschiedene Aufgaben gewichtet gezogen, ohne Zurücklegen. Ab Level 3 kommen Lückenaufgaben dazu, ab Level 5 zusätzlich Geteilt-Aufgaben (siehe unten). Beide zusammen machen höchstens die Hälfte einer Runde aus. Die erste Aufgabe einer Runde ist immer eine Mal-Aufgabe, damit der Einstieg sanft bleibt.
 
 Jede Aufgabe hat ein Gewicht. Je höher es ist, desto wahrscheinlicher kommt sie dran:
 
@@ -18,6 +18,37 @@ Gewicht = max(0,3 ; 1 + 2 · falsch − 0,3 · richtig + 1,5 · Langsamkeit)
 - **Richtige Antworten** senken es langsam.
 - **Langsame Aufgaben** erhöhen es ebenfalls (siehe Tempo).
 
+## Lückenaufgaben
+
+Ab **Level 3** kommen Aufgaben wie `4 × ? = 20` oder `? × 4 = 20` dazu. Gesucht ist der fehlende Faktor. Sie sind die Brücke zum Geteilt-Rechnen: Wer `4 × ? = 20` löst, hat die Umkehrung schon einmal gedacht.
+
+- Pro Runde gibt es 1 bis 2 Lückenaufgaben. Die Lücke steht zufällig vorn oder hinten.
+- Der gezeigte Faktor liegt zwischen 2 und 10, der fehlende zwischen 1 und 10.
+- Zusammen mit den Geteilt-Aufgaben bleiben höchstens 5 von 10 Aufgaben übrig, die keine reinen Mal-Aufgaben sind. In den letzten beiden Levels sind es deshalb nur 0 bis 1 Lückenaufgaben.
+- Wie bei Geteilt-Aufgaben gelten die gleiche Gewichtung (falsch und langsam kommt öfter dran) und **eigene Statistiken**. Die Basiszeit für "langsam" wird getrennt berechnet.
+- Bei einem Fehler zeigt die App die ganze Rechnung, z. B. `5 × 3 = 15`.
+- Beim Aufstieg auf Level 3 erscheint der Hinweis "Neu: Lückenaufgaben (4 × ? = 20)".
+- Die Einmaleins-Karte zeigt weiterhin nur Mal-Aufgaben.
+
+## Geteilt-Aufgaben
+
+Ab **Level 5** kommen Aufgaben wie `20 : 4` dazu. Sie sind die Umkehrung der Mal-Aufgaben (`4 × 5 = 20`). Geteilt wird nur durch 2 bis 10, das Ergebnis liegt zwischen 1 und 10. Wie viele davon in einer Runde vorkommen, steigt mit dem Level (der Rest sind Mal-Aufgaben):
+
+| Level | Geteilt-Aufgaben pro Runde |
+|---|---|
+| 1 bis 4 | keine |
+| 5 und 6 | 1 bis 2 |
+| 7 und 8 | 2 bis 3 |
+| 9 und 10 | 3 bis 4 |
+| 11 und 12 | 4 bis 5 (höchstens die Hälfte) |
+
+- Für jede Runde wird die Anzahl zufällig innerhalb der Spanne gewählt. Die Geteilt-Aufgaben werden unter die Mal-Aufgaben gemischt.
+- Es gilt dieselbe Gewichtung wie bei Mal-Aufgaben: Falsche und langsame Geteilt-Aufgaben kommen häufiger dran.
+- Geteilt-Aufgaben haben **eigene Statistiken**. Wer `4 × 5` kann, kann nicht automatisch `20 : 4`, und umgekehrt.
+- Die Basiszeit für "langsam" wird getrennt berechnet (Geteilt-Aufgaben dürfen länger dauern).
+- Beim Aufstieg auf Level 5 erscheint der Hinweis "Neu: Geteilt-Aufgaben".
+- Die Einmaleins-Karte zeigt nur Mal-Aufgaben. Die Geteilt-Statistik wird mitgespeichert.
+
 ## Tempo
 
 Gemessen wird die Zeit von der Anzeige der Aufgabe bis zum Abschicken, **nur bei richtigen Antworten**.
@@ -27,7 +58,7 @@ Gemessen wird die Zeit von der Anzeige der Aufgabe bis zum Abschicken, **nur bei
 | Obergrenze pro Antwort | 15 Sekunden (gegen Ablenkung) |
 | App im Hintergrund | Beim Zurückkommen startet die Zeit der Aufgabe neu |
 | Gespeichert pro Aufgabe | gleitender Durchschnitt `ms` (alter Wert zu 50 %, neuer zu 50 %) und Anzahl der Messungen `tn` |
-| Basis | Median aller Durchschnittszeiten (mindestens 3 Sekunden, ohne Daten 4 Sekunden) |
+| Basis | Median aller Durchschnittszeiten, getrennt nach Aufgabenart (Mal: mindestens 3 Sekunden, ohne Daten 4; Geteilt: mindestens 4,5, ohne Daten 6; Lücke: mindestens 4, ohne Daten 5) |
 
 **Langsamkeit** einer Aufgabe, für das Gewicht:
 
@@ -101,7 +132,7 @@ Pro Profil liegt ein Datensatz im `localStorage` unter dem Schlüssel `einmalein
 
 ```json
 {
-  "stats":  { "7x8": { "r": 5, "w": 1, "ms": 6400, "tn": 4 } },
+  "stats":  { "7x8": { "r": 5, "w": 1, "ms": 6400, "tn": 4 }, "d4x5": { "r": 2, "w": 1, "ms": 8100, "tn": 2 }, "l4x5": { "r": 3, "w": 0, "ms": 5200, "tn": 3 } },
   "log":    [ { "t": "2026-11-02T16:04:11.000Z", "q": "7x8", "a": 56, "ok": true, "ms": 5120 } ],
   "stars":  123,
   "streak": { "cur": 5, "best": 9, "last": "2026-11-20", "jokers": 1, "broke": false }
@@ -110,8 +141,8 @@ Pro Profil liegt ein Datensatz im `localStorage` unter dem Schlüssel `einmalein
 
 | Feld | Bedeutung |
 |---|---|
-| `stats` | pro Aufgabe (kleinerer Faktor zuerst): `r` richtig, `w` falsch, `ms` durchschnittliche Zeit, `tn` Zahl der Zeitmessungen |
-| `log` | jede einzelne Antwort mit Zeitpunkt, Aufgabe, Eingabe, richtig oder falsch und Dauer in ms (die letzten 5000) |
+| `stats` | pro Aufgabe (Mal: kleinerer Faktor zuerst, z. B. `7x8`; Geteilt: `d<Teiler>x<Ergebnis>`, z. B. `d4x5` für `20 : 4`; Lücke: `l<gezeigter Faktor>x<fehlender Faktor>`, z. B. `l4x5` für `4 × ? = 20`): `r` richtig, `w` falsch, `ms` durchschnittliche Zeit, `tn` Zahl der Zeitmessungen |
+| `log` | jede einzelne Antwort mit Zeitpunkt, Aufgabe (`7x8`, `42:7` oder `4x?=20`), Eingabe, richtig oder falsch und Dauer in ms (die letzten 5000) |
 | `stars` | gesammelte Diamanten |
 | `streak` | `cur` aktueller Streak, `best` Rekord, `last` letztes gezähltes Datum, `jokers` vorhandene Joker, `broke` war der Streak schon einmal gerissen |
 
@@ -130,6 +161,8 @@ Alle Regeln stehen im Skript von `index.html`:
 | Was | Wo |
 |---|---|
 | Aufgaben pro Runde | Konstante `ROUND` |
+| Ab welchem Level Geteilt-Aufgaben kommen und wie viele | Konstante `DIV_FROM`, Funktion `divCount()` |
+| Ab welchem Level Lückenaufgaben kommen und wie viele | Konstante `GAP_FROM`, Funktion `gapCount()` |
 | Profile (Auswahl, Anlegen, Wechseln) | `showWho()`, `addProfile()`, `selectProfile()`, `start()` |
 | Gewichtung der Aufgaben | Funktion `weight` in `newRound()` |
 | Tempo-Messung (Obergrenze 15 s, Durchschnitt) | in `submit()` |

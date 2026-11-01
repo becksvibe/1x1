@@ -30,7 +30,7 @@ button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 #emoji{font-size:4.5rem;margin:0}
 #res{font-size:2rem;font-weight:800;margin:.5rem 0}
 #streakmsg{font-size:1.1rem;font-weight:700;margin:.8rem 0;white-space:pre-line;line-height:1.6}
-#up{font-size:1.9rem;font-weight:800;color:var(--ok);margin:.6rem 0;text-shadow:0 0 14px #39ff8899}
+#up{white-space:pre-line;font-size:1.9rem;font-weight:800;color:var(--ok);margin:.6rem 0;text-shadow:0 0 14px #39ff8899}
 #up:empty{display:none}
 #lvl{font-size:1.35rem;font-weight:700;margin:.8rem 0 .6rem}
 .xp{margin:0 0 .5rem}
@@ -118,6 +118,7 @@ function loadDb(id) {
   return d;
 }
 let queue, idx, correct, cur, t0, locked, timer, startLevel, startMap;
+let expected, curKey, curQ, curLabel, curFull;
 const LEVELS = [
   [0, 'Frischer Noob', '🐣'], [20, 'Plastik Bro', ''], [50, 'Düsen-Wurst', ''],
   [100, 'Zombie-Zähler', ''], [180, 'Loot Lurch', ''], [300, 'Filament-Furzer', ''],
@@ -209,9 +210,12 @@ function updateStreak() {
 
 // ---- Tempo ----
 // Basis = seine typische Zeit (Median), mindestens 3 s
-function baseMs() {
-  const v = Object.values(db.stats).filter(s => s.tn >= 2).map(s => s.ms).sort((a, b) => a - b);
-  return v.length ? Math.max(3000, v[Math.floor(v.length / 2)]) : 4000;
+function baseMs(type) { // 'm' Mal, 'd' Geteilt, 'l' Lücke
+  const typeOf = k => k[0] === 'd' ? 'd' : k[0] === 'l' ? 'l' : 'm';
+  const v = Object.keys(db.stats).filter(k => typeOf(k) === type && db.stats[k].tn >= 2)
+    .map(k => db.stats[k].ms).sort((a, b) => a - b);
+  const min = { m: 3000, d: 4500, l: 4000 }[type], def = { m: 4000, d: 6000, l: 5000 }[type];
+  return v.length ? Math.max(min, v[Math.floor(v.length / 2)]) : def;
 }
 // 0 = flott ... 2 = deutlich langsamer als sonst (zählt erst ab 2 Zeitmessungen voll)
 function slowness(s, base) {
@@ -229,13 +233,13 @@ function cellState(a, b) {
   return s.r > s.w ? 2 : 1;
 }
 function snapshot() {
-  curBase = baseMs();
+  curBase = baseMs('m');
   const o = [];
   for (let a = 1; a <= 10; a++) for (let b = 1; b <= 10; b++) o.push(cellState(a, b));
   return o;
 }
 function drawMap() {
-  curBase = baseMs();
+  curBase = baseMs('m');
   const g = $('map'); g.innerHTML = '';
   const add = (t, c) => { const d = document.createElement('div'); d.className = c; d.textContent = t; g.appendChild(d); };
   add('×', 'h'); for (let b = 1; b <= 10; b++) add(b, 'h');
@@ -251,21 +255,53 @@ function drawMap() {
   $('mapinfo').textContent = done + ' von 100 Feldern sicher';
 }
 
+// ---- Geteilt-Aufgaben ----
+const DIV_FROM = 4; // ab Level 5 (Index 4)
+// Anzahl Geteilt-Aufgaben pro Runde: Level 5: 1-2 ... letztes Level: 4-5 (höchstens die Hälfte)
+function divCount(L) {
+  if (L < DIV_FROM) return 0;
+  const span = Math.max(1, LEVELS.length - 1 - DIV_FROM);
+  const max = Math.min(Math.floor(ROUND / 2), Math.round(2 + (L - DIV_FROM) * 3 / span));
+  const lo = Math.max(1, max - 1);
+  return lo + Math.floor(Math.random() * (max - lo + 1));
+}
+// ---- Lückenaufgaben (4 × ? = 20) ----
+const GAP_FROM = 2; // ab Level 3 (Index 2), als Brücke zum Geteilt-Rechnen
+// 1-2 pro Runde; Geteilt- und Lückenaufgaben zusammen höchstens die Hälfte der Runde
+function gapCount(L, nDiv) {
+  if (L < GAP_FROM) return 0;
+  const room = Math.floor(ROUND / 2) - nDiv;
+  if (room <= 0) return 0;
+  return 1 + Math.floor(Math.random() * Math.min(2, room));
+}
+// zieht n verschiedene Aufgaben, Gewicht w
+function draw(pool, n, w) {
+  const out = [];
+  while (out.length < n && pool.length) {
+    const total = pool.reduce((x, p) => x + w(p), 0);
+    let r = Math.random() * total, i = 0;
+    for (; i < pool.length - 1; i++) { r -= w(pool[i]); if (r <= 0) break; }
+    out.push(pool.splice(i, 1)[0]);
+  }
+  return out;
+}
+
 function newRound() {
-  const pool = [];
-  for (let a = 1; a <= 10; a++) for (let b = a; b <= 10; b++) pool.push([a, b]);
-  const base = baseMs();
-  const weight = p => {
-    const s = db.stats[p[0] + 'x' + p[1]] || {};
+  const weightOf = (key, base) => {
+    const s = db.stats[key] || {};
     return Math.max(0.3, 1 + 2 * (s.w || 0) - 0.3 * (s.r || 0) + 1.5 * slowness(s, base));
   };
-  queue = [];
-  while (queue.length < ROUND) {
-    const total = pool.reduce((x, p) => x + weight(p), 0);
-    let r = Math.random() * total, i = 0;
-    for (; i < pool.length - 1; i++) { r -= weight(pool[i]); if (r <= 0) break; }
-    queue.push(pool.splice(i, 1)[0]);
-  }
+  const baseM = baseMs('m'), baseD = baseMs('d'), baseG = baseMs('l');
+  const mPool = [], dPool = [], gPool = [];
+  for (let a = 1; a <= 10; a++) for (let b = a; b <= 10; b++) mPool.push([a, b]);
+  for (let d = 2; d <= 10; d++) for (let q = 1; q <= 10; q++) { dPool.push([d, q]); gPool.push([d, q]); } // d/q = Teiler/Ergebnis, bei Lücken: gezeigter/fehlender Faktor
+  const L = lvl(db.stars), nDiv = divCount(L), nGap = gapCount(L, nDiv);
+  queue = draw(mPool, ROUND - nDiv - nGap, p => weightOf(p[0] + 'x' + p[1], baseM)).map(p => ({ t: 'm', a: p[0], b: p[1] }))
+    .concat(draw(dPool, nDiv, p => weightOf('d' + p[0] + 'x' + p[1], baseD)).map(p => ({ t: 'd', d: p[0], q: p[1] })))
+    .concat(draw(gPool, nGap, p => weightOf('l' + p[0] + 'x' + p[1], baseG)).map(p => ({ t: 'g', s: p[0], m: p[1], first: Math.random() < 0.5 })));
+  for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; }
+  const firstM = queue.findIndex(x => x.t === 'm'); // sanfter Start: erste Aufgabe ist ein Mal-Rechnen
+  if (firstM > 0) [queue[0], queue[firstM]] = [queue[firstM], queue[0]];
   idx = 0; correct = 0; startLevel = lvl(db.stars); startMap = snapshot();
   $('end').classList.add('hidden'); $('who').classList.add('hidden');
   $('play').classList.remove('hidden');
@@ -273,9 +309,25 @@ function newRound() {
 }
 
 function show() {
-  const [a, b] = queue[idx];
-  cur = Math.random() < 0.5 ? [a, b] : [b, a];
-  $('task').textContent = cur[0] + ' × ' + cur[1];
+  const it = queue[idx];
+  if (it.t === 'd') {
+    cur = [it.d * it.q, it.d]; expected = it.q; curKey = 'd' + it.d + 'x' + it.q;
+    curLabel = cur[0] + ' : ' + cur[1]; curQ = cur[0] + ':' + cur[1];
+    curFull = curLabel + ' = ' + expected;
+  } else if (it.t === 'g') {
+    const prod = it.s * it.m;
+    cur = [it.s, it.m]; expected = it.m; curKey = 'l' + it.s + 'x' + it.m;
+    curLabel = it.first ? '? × ' + it.s + ' = ' + prod : it.s + ' × ? = ' + prod;
+    curQ = it.first ? '?x' + it.s + '=' + prod : it.s + 'x?=' + prod;
+    curFull = it.first ? it.m + ' × ' + it.s + ' = ' + prod : it.s + ' × ' + it.m + ' = ' + prod;
+  } else {
+    cur = Math.random() < 0.5 ? [it.a, it.b] : [it.b, it.a]; expected = cur[0] * cur[1];
+    curKey = Math.min(it.a, it.b) + 'x' + Math.max(it.a, it.b);
+    curLabel = cur[0] + ' × ' + cur[1]; curQ = cur[0] + 'x' + cur[1];
+    curFull = curLabel + ' = ' + expected;
+  }
+  $('task').textContent = curLabel;
+  $('task').style.fontSize = curLabel.length > 8 ? 'clamp(2.2rem,11.5vw,3.6rem)' : ''; // längere Aufgaben etwas kleiner
   $('n').textContent = (idx + 1) + ' / ' + ROUND;
   $('stars').textContent = '🔥 ' + shownStreak() + '   💎 ' + db.stars;
   $('bar').style.width = (idx / ROUND * 100) + '%';
@@ -291,13 +343,12 @@ function submit() {
   if (locked) { next(); return; }
   const v = $('ans').value.trim();
   if (v === '') return;
-  const [a, b] = queue[idx];
-  const key = a + 'x' + b;
-  const answer = cur[0] * cur[1];
+  const key = curKey;
+  const answer = expected;
   const ok = Number(v) === answer;
   const s = db.stats[key] = db.stats[key] || { r: 0, w: 0 };
   if (ok) { s.r++; const ms = Math.min(Date.now() - t0, 15000); s.ms = s.tn ? Math.round(s.ms * 0.5 + ms * 0.5) : ms; s.tn = (s.tn || 0) + 1; } else s.w++;
-  db.log.push({ t: new Date().toISOString(), q: cur[0] + 'x' + cur[1], a: Number(v), ok: ok, ms: Date.now() - t0 });
+  db.log.push({ t: new Date().toISOString(), q: curQ, a: Number(v), ok: ok, ms: Date.now() - t0 });
   if (db.log.length > 5000) db.log.shift();
   locked = true;
   $('ans').disabled = true;
@@ -307,7 +358,7 @@ function submit() {
     m.textContent = 'Treffer! 💎'; m.className = 'ok pop';
     timer = setTimeout(next, 700);
   } else {
-    m.textContent = 'Fast! ' + cur[0] + ' × ' + cur[1] + ' = ' + answer;
+    m.textContent = 'Fast! ' + curFull;
     m.className = 'no';
     $('go').textContent = 'Weiter ➜';
     $('go').focus();
@@ -333,7 +384,7 @@ function finish() {
   $('total').textContent = '💎 ' + db.stars + ' gesammelt';
   $('streakmsg').textContent = sm.join('\n');
   const L = lvl(db.stars), lv = LEVELS[L], nx = LEVELS[L + 1];
-  $('up').textContent = L > startLevel ? 'LEVEL UP! 🎊' : '';
+  $('up').textContent = L > startLevel ? 'LEVEL UP! 🎊' + (L >= GAP_FROM && startLevel < GAP_FROM ? '\nNeu: Lückenaufgaben (4 × ? = 20)' : '') + (L >= DIV_FROM && startLevel < DIV_FROM ? '\nNeu: Geteilt-Aufgaben ➗' : '') : '';
   $('up').className = L > startLevel ? 'pop' : '';
   $('lvl').textContent = 'Level ' + (L + 1) + ' · ' + (lv[1] + ' ' + lv[2]).trim();
   $('xp').style.width = nx ? ((db.stars - lv[0]) / (nx[0] - lv[0]) * 100) + '%' : '100%';
