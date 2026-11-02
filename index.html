@@ -200,7 +200,7 @@ function updateStreak() {
   st.last = t;
   const record = st.best > 0 && st.cur > st.best;
   if (st.cur > st.best) st.best = st.cur;
-  if (MILE[st.cur]) { db.stars += MILE[st.cur]; lines.push('🎁 ' + tage(st.cur) + ' am Stück! +' + MILE[st.cur] + ' Bonus-Diamanten'); }
+  if (MILE[st.cur]) { db.stars += MILE[st.cur]; lines.push('🎁 ' + tage(st.cur) + ' am Stück! +' + MILE[st.cur] + ' 💩 Bonus'); }
   if (st.cur % 7 === 0 && st.jokers < 2) { st.jokers++; lines.push('🃏 Neuer Joker verdient!'); }
   if (record && st.broke) lines.push('🏅 Neuer Rekord!');
   if (st.jokers > 0) lines.push('Joker: ' + '🃏'.repeat(st.jokers));
@@ -329,7 +329,7 @@ function show() {
   $('task').textContent = curLabel;
   $('task').style.fontSize = curLabel.length > 8 ? 'clamp(2.2rem,11.5vw,3.6rem)' : ''; // längere Aufgaben etwas kleiner
   $('n').textContent = (idx + 1) + ' / ' + ROUND;
-  $('stars').textContent = '🔥 ' + shownStreak() + '   💎 ' + db.stars;
+  $('stars').textContent = '🔥 ' + shownStreak() + '   💩 ' + db.stars;
   $('bar').style.width = (idx / ROUND * 100) + '%';
   $('msg').textContent = ''; $('msg').className = '';
   const input = $('ans');
@@ -355,7 +355,7 @@ function submit() {
   const m = $('msg');
   if (ok) {
     correct++; db.stars++;
-    m.textContent = 'Treffer! 💎'; m.className = 'ok pop';
+    m.textContent = 'Treffer! 💩'; m.className = 'ok pop';
     timer = setTimeout(next, 700);
   } else {
     m.textContent = 'Fast! ' + curFull;
@@ -380,15 +380,15 @@ function finish() {
   $('end').classList.remove('hidden');
   $('emoji').textContent = perfect ? '🏆' : correct >= 7 ? '🎉' : '💪';
   $('res').textContent = correct + ' von ' + ROUND + ' richtig';
-  $('bonus').textContent = perfect ? 'Alles richtig: +3 Bonus-Diamanten!' : '';
-  $('total').textContent = '💎 ' + db.stars + ' gesammelt';
+  $('bonus').textContent = perfect ? 'Alles richtig: +3 💩 Bonus!' : '';
+  $('total').textContent = '💩 ' + db.stars + ' gesammelt';
   $('streakmsg').textContent = sm.join('\n');
   const L = lvl(db.stars), lv = LEVELS[L], nx = LEVELS[L + 1];
   $('up').textContent = L > startLevel ? 'LEVEL UP! 🎊' + (L >= GAP_FROM && startLevel < GAP_FROM ? '\nNeu: Lückenaufgaben (4 × ? = 20)' : '') + (L >= DIV_FROM && startLevel < DIV_FROM ? '\nNeu: Geteilt-Aufgaben ➗' : '') : '';
   $('up').className = L > startLevel ? 'pop' : '';
   $('lvl').textContent = 'Level ' + (L + 1) + ' · ' + (lv[1] + ' ' + lv[2]).trim();
   $('xp').style.width = nx ? ((db.stars - lv[0]) / (nx[0] - lv[0]) * 100) + '%' : '100%';
-  $('xptext').textContent = nx ? 'Noch ' + (nx[0] - db.stars) + ' 💎 bis zum nächsten Level 👀' : 'Höchstes Level erreicht!';
+  $('xptext').textContent = nx ? 'Noch ' + (nx[0] - db.stars) + ' 💩 bis zum nächsten Level 👀' : 'Höchstes Level erreicht!';
   drawMap();
   window.scrollTo(0, 0);
   $('again').focus();
