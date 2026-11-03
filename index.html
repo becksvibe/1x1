@@ -121,7 +121,7 @@ let queue, idx, correct, cur, t0, locked, timer, startLevel, startMap;
 let expected, curKey, curQ, curLabel, curFull;
 const LEVELS = [
   [0, 'Frischer Noob', '🐣'], [20, 'Plastik Bro', ''], [50, 'Düsen-Wurst', ''],
-  [100, 'Zombie-Zähler', ''], [180, 'Loot Lurch', ''], [300, 'Filament-Furzer', ''],
+  [100, 'Zombie-Zähler', ''], [300, 'Filament-Furzer', ''],
   [500, 'Multiplikations-Mutant', ''], [800, 'Creeper-Kneter', ''],
   [1200, 'Filament-Flechter', ''], [1300, 'Plastik Profi', ''], [1400, 'Spaghetti Drucker', ''], [2000, 'Bald 3d-Drucker Besitzer', '']
 ];
@@ -378,7 +378,7 @@ function finish() {
   const sm = updateStreak();
   $('play').classList.add('hidden');
   $('end').classList.remove('hidden');
-  $('emoji').textContent = perfect ? '🏆' : correct >= 7 ? '🎉' : '💪';
+  $('emoji').textContent = perfect ? '🧵' : correct >= 7 ? '🎉' : '💪';
   $('res').textContent = correct + ' von ' + ROUND + ' richtig';
   $('bonus').textContent = perfect ? 'Alles richtig: +3 💩 Bonus!' : '';
   $('total').textContent = '💩 ' + db.stars + ' gesammelt';
